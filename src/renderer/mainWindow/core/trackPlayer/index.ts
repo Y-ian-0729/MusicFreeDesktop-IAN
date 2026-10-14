@@ -6,7 +6,7 @@
  */
 import type { IMusicItemSlim } from '@appTypes/infra/musicSheet';
 import { PlayerState, RepeatMode, QUALITY_KEYS } from '@common/constant';
-import { isSameMedia } from '@common/mediaKey';
+import { isSameMedia, compositeKey } from '@common/mediaKey';
 import musicItemToSlim from '@common/musicItemToSlim';
 import delay from '@common/delay';
 import throttle from '@common/throttle';
@@ -16,6 +16,8 @@ import appConfig from '@infra/appConfig/renderer';
 import downloadManager from '@infra/downloadManager/renderer';
 import fsUtil from '@infra/fsUtil/renderer';
 import { addToRecentlyPlayed } from '../recentlyPlayed';
+import { resolveRoamNextIndex, markRoamPlayed } from '../roam';
+import { recordPlay } from '../roam/roamStats';
 import appSync from '@infra/appSync/renderer/main';
 import { syncKV } from '@renderer/common/kvStore';
 import { REPEAT_MODE_MAP } from '@renderer/common/repeatModeMap';
@@ -289,6 +291,11 @@ class TrackPlayer {
             // 记录到最近播放（异步，不阻塞播放）
             addToRecentlyPlayed(musicItem).catch(() => {});
 
+            // 漫游统计：累计播放次数 + 推进本会话最近播放环
+            // 无论当前是否处于漫游模式都记录，使熟悉度随日常播放自然积累
+            recordPlay(compositeKey(targetSlim.platform, targetSlim.id));
+            markRoamPlayed(queue, index);
+
             // 异步丰富元数据（锦上添花，失败不影响播放）
             pluginManager
                 .callPluginMethod({
@@ -345,13 +352,13 @@ class TrackPlayer {
         await this.playIndex(Math.max(startIndex, 0));
     }
 
-    /** 手动切到下一首（与 repeatMode 无关，始终前进） */
+    /** 手动切到下一首（漫游模式下按漫游策略挑选） */
     async skipToNext(): Promise<void> {
         if (this.playQueue.isEmpty) {
             this.clearPlayback();
             return;
         }
-        await this.playIndex(this.playQueue.getNextIndex());
+        await this.playIndex(await this.resolveNextIndex());
     }
 
     /** 手动切到上一首（与 repeatMode 无关，始终后退） */
@@ -521,6 +528,27 @@ class TrackPlayer {
 
     // ─── 事件绑定 ───
 
+    /**
+     * 解析「下一首」的队列下标。
+     *
+     * 漫游模式下走 roamSession 的动态挑选（结合播放统计与相似度），
+     * 其余模式沿用 PlayQueue 的线性 / Shuffle 虚拟导航。
+     *
+     * 自动前进（播放完毕）与手动切歌共用此方法，保证两条路径行为一致。
+     */
+    private async resolveNextIndex(): Promise<number> {
+        const repeatMode = store.get(repeatModeAtom);
+        if (repeatMode === RepeatMode.Roam) {
+            const familiarity = appConfig.getConfigByKey('localMusic.roamFamiliarity') ?? 50;
+            return resolveRoamNextIndex(
+                this.playQueue.queue,
+                this.playQueue.getCurrentIndex(),
+                familiarity,
+            );
+        }
+        return this.playQueue.getNextIndex();
+    }
+
     private bindAudioEvents(): void {
         this.audioController.on('stateChange', (state) => {
             store.set(playerStateAtom, state);
@@ -667,7 +695,7 @@ class TrackPlayer {
             });
         } else {
             // 前进到下一首（不用 skipToNext，因为它是手动操作语义）
-            await this.playIndex(this.playQueue.getNextIndex());
+            await this.playIndex(await this.resolveNextIndex());
         }
     }
 

@@ -22,6 +22,7 @@ import {
 import { ArtistsTab } from './components/ArtistsTab';
 import { AlbumsTab } from './components/AlbumsTab';
 import { FoldersTab } from './components/FoldersTab';
+import { RoamControls } from './components/RoamControls';
 import type { HideableColumn } from '../../components/business/SongTable';
 import './index.scss';
 
@@ -133,14 +134,17 @@ export default function LocalMusicPage() {
                     <h2 className="p-local-music__title">{t('local_music.title')}</h2>
                     {scanning && <RefreshCw size={20} className="p-local-music__scan-indicator" />}
                 </div>
-                <Button
-                    variant="secondary"
-                    size="md"
-                    icon={<FolderSearch size={16} />}
-                    onClick={handleScanFolder}
-                >
-                    {t('local_music.scan_folder')}
-                </Button>
+                <div className="p-local-music__header-actions">
+                    <RoamControls />
+                    <Button
+                        variant="secondary"
+                        size="md"
+                        icon={<FolderSearch size={16} />}
+                        onClick={handleScanFolder}
+                    >
+                        {t('local_music.scan_folder')}
+                    </Button>
+                </div>
             </div>
 
             {/* ── TabBar + 搜索框 ── */}

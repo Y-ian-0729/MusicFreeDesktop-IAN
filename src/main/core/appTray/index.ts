@@ -311,6 +311,15 @@ class AppTray {
                         appSync.sendCommand('set-repeat-mode', RepeatMode.Shuffle);
                     },
                 },
+                {
+                    label: i18n.t('playback.repeat_roam'),
+                    id: RepeatMode.Roam,
+                    type: 'radio',
+                    checked: repeatMode === RepeatMode.Roam,
+                    click: () => {
+                        appSync.sendCommand('set-repeat-mode', RepeatMode.Roam);
+                    },
+                },
             ]),
         });
 

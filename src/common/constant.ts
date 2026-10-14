@@ -25,13 +25,16 @@ export enum RepeatMode {
     Queue = 'queue-repeat',
     /** 单曲循环 */
     Loop = 'loop',
+    /** 漫游：按熟悉度与相似度动态挑选下一首（仅本地音乐使用） */
+    Roam = 'roam',
 }
 
-/** RepeatMode 循环切换顺序：Queue → Shuffle → Loop → Queue */
+/** RepeatMode 循环切换顺序：Queue → Shuffle → Loop → Roam → Queue */
 export const REPEAT_MODE_NEXT: Record<RepeatMode, RepeatMode> = {
     [RepeatMode.Queue]: RepeatMode.Shuffle,
     [RepeatMode.Shuffle]: RepeatMode.Loop,
-    [RepeatMode.Loop]: RepeatMode.Queue,
+    [RepeatMode.Loop]: RepeatMode.Roam,
+    [RepeatMode.Roam]: RepeatMode.Queue,
 };
 
 /** 日志级别 */

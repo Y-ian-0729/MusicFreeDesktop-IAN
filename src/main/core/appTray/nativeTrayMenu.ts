@@ -199,6 +199,11 @@ class NativeTrayMenu {
         repeatMode: RepeatMode | undefined,
         cover: CoverResult,
     ): void {
+        // native 模块的 playMode 只识别 queue-repeat / loop / shuffle 三种取值，
+        // 漫游没有对应图标，映射为 shuffle 仅用于缩略图展示（不影响实际播放策略）。
+        const nativePlayMode: RepeatMode | undefined =
+            repeatMode === RepeatMode.Roam ? RepeatMode.Shuffle : repeatMode;
+
         this.module.updateNowPlaying({
             title: musicItem
                 ? musicItem.title || i18n.t('media.unknown_title')
@@ -209,7 +214,7 @@ class NativeTrayMenu {
             coverHeight: cover.height,
             isPlaying: playerState === PlayerState.Playing,
             isLiked: isFavorite ?? false,
-            playMode: repeatMode,
+            playMode: nativePlayMode,
         });
     }
 

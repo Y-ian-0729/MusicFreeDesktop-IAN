@@ -48,6 +48,50 @@
         animation: p-local-music-spin 1.2s linear infinite;
     }
 
+    // ── 漫游控件 ──
+    &__header-actions {
+        display: flex;
+        align-items: center;
+        gap: var(--space-3);
+    }
+
+    &__roam {
+        display: flex;
+        align-items: center;
+        gap: var(--space-3);
+    }
+
+    &__roam-panel {
+        display: flex;
+        align-items: center;
+        gap: var(--space-2);
+    }
+
+    &__roam-label {
+        font-size: var(--text-body-size);
+        color: var(--color-text-secondary);
+        white-space: nowrap;
+    }
+
+    &__roam-hint {
+        font-size: var(--text-caption-size);
+        color: var(--color-text-muted);
+        white-space: nowrap;
+    }
+
+    &__roam-slider {
+        width: 120px;
+        flex-shrink: 0;
+    }
+
+    &__roam-value {
+        min-width: 28px;
+        text-align: right;
+        font-size: var(--text-caption-size);
+        font-variant-numeric: tabular-nums;
+        color: var(--color-text-secondary);
+    }
+
     // ── TabBar + 搜索框行 ──
     &__tab-row {
         display: flex;
