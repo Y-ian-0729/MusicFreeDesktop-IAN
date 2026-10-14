@@ -34,6 +34,8 @@ export interface ISyncKVSchema {
 export interface IAsyncKVSchema {
     /** 最近播放列表（完整 IMusicItem，按时间倒序） */
     recentlyPlayed: IMusic.IMusicItem[];
+    /** 漫游播放统计：compositeKey → { count, lastAt } */
+    roamStats: Record<string, { count: number; lastAt: number }>;
 }
 
 // ═══════════════════════════════════════════════════════

@@ -26,6 +26,7 @@ const defaultAppConfig: IAppConfig = {
     'lyric.fontColor': '#ffffff',
     'lyric.strokeColor': '#f5c542',
     'lyric.fontSize': 48,
+    'lyric.showTranslation': true,
     'shortCut.enableLocal': true,
     'shortCut.enableGlobal': false,
     'download.concurrency': 5,
@@ -35,6 +36,8 @@ const defaultAppConfig: IAppConfig = {
     'backup.resumeBehavior': 'append',
     'normal.language': 'zh-CN',
     'normal.useCustomTrayMenu': true,
+    'localMusic.splitMultiArtist': true,
+    'localMusic.roamFamiliarity': 50,
 };
 
 export default defaultAppConfig;

@@ -50,6 +50,8 @@ interface _IAppConfig {
     'lyric.fontSize': number;
     /** 描边颜色 */
     'lyric.strokeColor': string;
+    /** 桌面歌词：是否显示翻译（双语） */
+    'lyric.showTranslation': boolean;
 
     /** 是否启用本地快捷键 */
     'shortCut.enableLocal': boolean;
@@ -98,6 +100,10 @@ interface _IAppConfig {
     'localMusic.excludedPaths': string[];
     /** 本地音乐：最短时长过滤（秒），低于此值的文件在渲染进程侧过滤 */
     'localMusic.minDurationSec': number;
+    /** 本地音乐：是否拆分多歌手标签（如「A/B」计为两位歌手） */
+    'localMusic.splitMultiArtist': boolean;
+    /** 本地音乐漫游：熟悉度 0（偏新鲜）~ 100（偏常听） */
+    'localMusic.roamFamiliarity': number;
 
     /** 不需要用户配置的数据 */
     'private.mainWindowSize': ISize;
