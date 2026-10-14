@@ -14,9 +14,11 @@ import {
     PinOff,
     AArrowUp,
     AArrowDown,
+    Languages,
 } from 'lucide-react';
 import { cn } from '@common/cn';
 import { PlayerState } from '@common/constant';
+import { useTranslation } from 'react-i18next';
 import appSyncAuxiliary, { useAppStatePartial } from '@infra/appSync/renderer/auxiliary';
 import appConfig from '@infra/appConfig/renderer';
 import { useConfigValue } from '@renderer/common/hooks/useConfigValue';
@@ -65,6 +67,7 @@ const FONT_SIZE_STEP = 2;
 
 /** 解锁态：完整播放控制 + 置顶/字号 + 锁定 + 关闭 */
 function UnlockedToolbar({ visible }: { visible: boolean }) {
+    const { t } = useTranslation();
     const playerState = useAppStatePartial('playerState');
     const isPlaying = playerState === PlayerState.Playing;
 
@@ -73,6 +76,9 @@ function UnlockedToolbar({ visible }: { visible: boolean }) {
 
     const [fontSize] = useConfigValue('lyric.fontSize');
     const currentSize = fontSize ?? 54;
+
+    const [showTranslation, setShowTranslation] = useConfigValue('lyric.showTranslation');
+    const isTranslationOn = showTranslation ?? true;
 
     return (
         <div className={cn('lyric-toolbar', visible && 'is-visible')}>
@@ -85,6 +91,20 @@ function UnlockedToolbar({ visible }: { visible: boolean }) {
                 }}
             >
                 {isOnTop ? <Pin size={16} fill="currentColor" /> : <PinOff size={16} />}
+            </button>
+
+            <span className="lyric-toolbar__sep" />
+
+            {/* ── 双语歌词开关 ── */}
+            <button
+                className={cn('lyric-toolbar__btn', isTranslationOn && 'is-active')}
+                type="button"
+                title={isTranslationOn ? t('lyric.hide_translation') : t('lyric.show_translation')}
+                onClick={() => {
+                    setShowTranslation(!isTranslationOn);
+                }}
+            >
+                <Languages size={16} />
             </button>
 
             <span className="lyric-toolbar__sep" />

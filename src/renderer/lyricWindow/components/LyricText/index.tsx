@@ -24,6 +24,7 @@ export default memo(function LyricText() {
     const [fontSize] = useConfigValue('lyric.fontSize');
     const [fontColor] = useConfigValue('lyric.fontColor');
     const [strokeColor] = useConfigValue('lyric.strokeColor');
+    const [showTranslation] = useConfigValue('lyric.showTranslation');
 
     const fontFamily = fontData?.family || undefined;
     const resolvedFontSize = fontSize ?? 54;
@@ -39,6 +40,13 @@ export default memo(function LyricText() {
           (currentMusic
               ? `${currentMusic.title} - ${currentMusic.artist ?? ''}`
               : t('lyric.no_lyric')));
+
+    // 翻译文本：解析器在时间不匹配时会写入空字符串，
+    // 必须 trim 判空，否则会渲染出空行并导致窗口高度跳动
+    const translationText =
+        showTranslation !== false && currentLrc?.translation?.trim()
+            ? currentLrc.translation.trim()
+            : '';
 
     // ── DOM 测量：用实际渲染宽度判断是否需要滚动 ──
     const containerRef = useRef<HTMLDivElement>(null);
@@ -139,8 +147,15 @@ export default memo(function LyricText() {
 
     return (
         <div ref={containerRef} className={cn('lyric-text', needsScroll && 'is-scrollable')}>
+            {/*
+             * contentRef 包裹主歌词与翻译两行，宽度取两者中较长者，
+             * 因此横向滚动按较长的那一行判断（双语时翻译可能比原文更长）。
+             */}
             <div ref={contentRef} className="lyric-text__content" style={contentStyle}>
-                {displayText}
+                <div className="lyric-text__main">{displayText}</div>
+                {translationText && (
+                    <div className="lyric-text__translation">{translationText}</div>
+                )}
             </div>
         </div>
     );

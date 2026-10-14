@@ -3,6 +3,13 @@
 // ============================================================================
 
 .lyric-toolbar {
+    // 覆盖层：绝对定位在歌词下方，不参与文档流。
+    // 这样工具栏不会把歌词往下挤，按钮得以紧贴歌词。
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 10;
     display: flex;
     align-items: center;
     justify-content: center;

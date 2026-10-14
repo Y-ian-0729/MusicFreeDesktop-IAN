@@ -36,6 +36,7 @@ export function LyricSection() {
     const [fontColor, setFontColor] = useConfigValue('lyric.fontColor');
     const [strokeColor, setStrokeColor] = useConfigValue('lyric.strokeColor');
     const [fontSize, setFontSize] = useConfigValue('lyric.fontSize');
+    const [showTranslation, setShowTranslation] = useConfigValue('lyric.showTranslation');
 
     // ── 本地字体列表 ──
     const [fontOptions, setFontOptions] = useState<SelectOption[]>([
@@ -209,6 +210,11 @@ export function LyricSection() {
                 label={t('settings.lyric.stroke_color_label')}
                 description={t('settings.lyric.stroke_color_desc')}
                 control={<ColorPicker value={strokeColor ?? '#f5c542'} onChange={setStrokeColor} />}
+            />
+            <SettingRow
+                label={t('settings.lyric.show_translation_label')}
+                description={t('settings.lyric.show_translation_desc')}
+                control={<Toggle checked={showTranslation ?? true} onChange={setShowTranslation} />}
             />
         </SettingsCard>
     );

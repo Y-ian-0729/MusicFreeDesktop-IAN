@@ -83,16 +83,53 @@ function normalizeWindowPosition(win: BrowserWindow, position: { x: number; y: n
     return needCorrection;
 }
 
-// ─── 歌词窗口尺寸常量（与旧版保持一致） ───
+// ─── 歌词窗口尺寸常量 ───
 
-const LYRIC_MIN_WIDTH = 920;
-const LYRIC_MIN_HEIGHT = 92; // 60 + 16 * 2
-const LYRIC_MAX_HEIGHT = 240; // 60 + 80 * 2
+/**
+ * 最小宽度：仅作为可拖拽的下限，让用户能把窗口收到接近歌词宽度以实现「贴边」。
+ * 注意不要用它做首次打开的默认宽度，否则会改变旧版观感（见 LYRIC_DEFAULT_WIDTH）。
+ */
+const LYRIC_MIN_WIDTH = 320;
+/** 首次打开（或尺寸未持久化）时的默认宽度，与旧版保持一致 */
+const LYRIC_DEFAULT_WIDTH = 920;
+const LYRIC_MAX_HEIGHT = 320;
 
-/** 根据字体大小推算歌词窗口高度 */
-function evaluateLyricHeight(fontSize?: number): number {
-    return 60 + (fontSize || 48) * 2;
+/** 歌词区上下内边距（各 8px） */
+const LYRIC_TEXT_PAD_Y = 8;
+/** 工具栏带高度（工具栏改为覆盖层，此处为其预留的底部空间） */
+const LYRIC_TOOLBAR_BAND = 32;
+/** 主歌词行高系数 */
+const LYRIC_LINE_RATIO = 1.25;
+/** 翻译行行高系数（相对字号） */
+const LYRIC_TRANS_RATIO = 0.75;
+/** 固定高度部分：上下内边距 + 工具栏带 */
+const LYRIC_FIXED_HEIGHT = LYRIC_TEXT_PAD_Y * 2 + LYRIC_TOOLBAR_BAND;
+
+/** 字号范围（与歌词窗口工具栏、设置页保持一致） */
+const LYRIC_FONT_SIZE_MIN = 12;
+const LYRIC_FONT_SIZE_MAX = 80;
+
+/** 根据字号与是否显示翻译推算歌词窗口高度 */
+function evaluateLyricHeight(fontSize?: number, showTranslation = true): number {
+    const size = fontSize || 48;
+    const textHeight = size * LYRIC_LINE_RATIO + (showTranslation ? size * LYRIC_TRANS_RATIO : 0);
+    return Math.round(LYRIC_FIXED_HEIGHT + textHeight);
 }
+
+/**
+ * 由窗口高度反推字号（evaluateLyricHeight 的逆运算）。
+ *
+ * 拖拽改变窗口高度时用于同步字号，因此必须与 evaluateLyricHeight 严格互逆，
+ * 两处修改需同时进行。
+ */
+function evaluateLyricFontSize(height: number, showTranslation = true): number {
+    const ratio = LYRIC_LINE_RATIO + (showTranslation ? LYRIC_TRANS_RATIO : 0);
+    const raw = (height - LYRIC_FIXED_HEIGHT) / ratio;
+    return Math.max(LYRIC_FONT_SIZE_MIN, Math.min(LYRIC_FONT_SIZE_MAX, Math.round(raw)));
+}
+
+/** 最小高度：单行、最小字号时的窗口高度 */
+const LYRIC_MIN_HEIGHT = evaluateLyricHeight(LYRIC_FONT_SIZE_MIN, false);
 
 // ─── 迷你模式窗口尺寸常量 ───
 
@@ -444,8 +481,13 @@ class WindowManager implements IWindowManager {
         const initPosition = appConfig.getConfigByKey('private.lyricWindowPosition');
         const initSize = appConfig.getConfigByKey('private.lyricWindowSize');
 
-        let width = Math.max(initSize?.width ?? LYRIC_MIN_WIDTH, LYRIC_MIN_WIDTH);
-        let height = evaluateLyricHeight(appConfig.getConfigByKey('lyric.fontSize') ?? undefined);
+        // 默认宽度用 LYRIC_DEFAULT_WIDTH（与旧版一致），最小宽度才用 LYRIC_MIN_WIDTH。
+        // 持久化尺寸仍受最小宽度约束。
+        let width = Math.max(initSize?.width ?? LYRIC_DEFAULT_WIDTH, LYRIC_MIN_WIDTH);
+        let height = evaluateLyricHeight(
+            appConfig.getConfigByKey('lyric.fontSize') ?? undefined,
+            appConfig.getConfigByKey('lyric.showTranslation') ?? true,
+        );
         let lyricMaxWidth = 0;
 
         const lyricWindow = new BrowserWindow({
@@ -489,7 +531,11 @@ class WindowManager implements IWindowManager {
         let isResizingFromConfig = false;
         const persistLyricSize = throttle(() => {
             if (lyricWindow.isDestroyed()) return;
-            const fontSize = Math.max(Math.min(Math.floor((height - 60) / 2), 80), 12);
+            // 高度反推字号时必须用当前的翻译开关，否则双语/单行的行高系数会算错
+            const fontSize = evaluateLyricFontSize(
+                height,
+                appConfig.getConfigByKey('lyric.showTranslation') ?? true,
+            );
             appConfig.setConfig({
                 'lyric.fontSize': fontSize,
                 'private.lyricWindowSize': { width, height },
@@ -532,9 +578,22 @@ class WindowManager implements IWindowManager {
         ) => {
             if (lyricWindow.isDestroyed()) return;
 
-            // fontSize: 仅响应来自渲染进程的变更，主进程 resize 反推的字号不需要再 setSize
-            if (source === 'renderer' && 'lyric.fontSize' in patch && patch['lyric.fontSize']) {
-                const newHeight = evaluateLyricHeight(patch['lyric.fontSize'] as number);
+            const showTranslation = () =>
+                (appConfig.getConfigByKey('lyric.showTranslation') ?? true) as boolean;
+
+            // fontSize / showTranslation: 仅响应来自渲染进程的变更，
+            // 主进程 resize 反推的字号不需要再 setSize。
+            // 两者都影响窗口高度（双语比单行多一行），因此合并处理。
+            const fontSizeChanged =
+                source === 'renderer' && 'lyric.fontSize' in patch && !!patch['lyric.fontSize'];
+            const translationChanged = source === 'renderer' && 'lyric.showTranslation' in patch;
+
+            if (fontSizeChanged || translationChanged) {
+                const fontSize =
+                    (patch['lyric.fontSize'] as number | undefined) ??
+                    appConfig.getConfigByKey('lyric.fontSize') ??
+                    48;
+                const newHeight = evaluateLyricHeight(fontSize, showTranslation());
                 if (newHeight !== height) {
                     height = newHeight;
                     isResizingFromConfig = true;

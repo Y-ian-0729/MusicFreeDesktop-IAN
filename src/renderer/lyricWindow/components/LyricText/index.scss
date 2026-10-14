@@ -8,7 +8,8 @@
     align-items: center;
     justify-content: center;
     overflow: hidden;
-    padding: 0 var(--space-4);
+    // 收紧水平内边距，使歌词可以贴近窗口边缘
+    padding: 0 4px;
     min-height: 0;
 
     &.is-scrollable {
@@ -21,6 +22,18 @@
         -webkit-text-stroke-width: 1px;
         paint-order: stroke fill;
         text-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
-        line-height: 1.2;
+        line-height: 1.25;
+    }
+
+    &__main {
+        white-space: nowrap;
+    }
+
+    // 翻译行：同色系但更小、略透明，避免与主歌词争夺注意力
+    &__translation {
+        white-space: nowrap;
+        font-size: 0.6em;
+        line-height: 1.25;
+        opacity: 0.75;
     }
 }
