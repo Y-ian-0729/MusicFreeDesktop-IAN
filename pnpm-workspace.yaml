@@ -1,0 +1,24 @@
+# pnpm 11 的配置入口。
+#
+# 本项目原本把配置写在 .npmrc / package.json 中，但 pnpm 11 已不再读取这两处的
+# 以下设置，导致：
+#   1. `node-linker = hoisted` 未生效 → 实际为 isolated（.pnpm）结构，
+#      使 electron-forge 的依赖遍历器（flora-colossus）找不到传递依赖而打包失败；
+#   2. `pnpm.onlyBuiltDependencies` 未生效 → electron / better-sqlite3 / sharp
+#      的构建脚本被跳过，Electron 二进制与原生模块缺失。
+# 因此把两项设置迁移到本文件。
+
+# 扁平化 node_modules：electron-forge / electron-packager 的依赖遍历要求
+nodeLinker: hoisted
+
+# 允许执行构建脚本的依赖白名单
+# - electron       必需，postinstall 下载 Electron 二进制（否则无法启动）
+# - better-sqlite3 必需，编译原生 SQLite 绑定（否则数据库不可用）
+# - sharp          必需，Electron 主进程图像处理原生模块
+# - @parcel/watcher / unrs-resolver 为间接依赖的可选构建，无需启用
+allowBuilds:
+    '@parcel/watcher': false
+    better-sqlite3: true
+    electron: true
+    sharp: true
+    unrs-resolver: false

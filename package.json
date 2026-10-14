@@ -11,6 +11,7 @@
         "package": "cross-env NODE_ENV=production electron-forge package",
         "make": "cross-env NODE_ENV=production electron-forge make",
         "publish": "electron-forge publish",
+        "package-win": "node scripts/package-win.mjs",
         "format": "prettier . --write",
         "format:check": "prettier . --check",
         "lint": "eslint ./src",

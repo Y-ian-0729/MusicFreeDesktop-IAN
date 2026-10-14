@@ -90,3 +90,9 @@ typings/
 
 # Electron-Forge
 out/
+
+# 便携版打包输出（安装包通过 GitHub Release 上传，不进 git）
+dist/
+
+# 临时诊断目录
+.tmp-*

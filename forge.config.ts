@@ -30,9 +30,12 @@ const config: ForgeConfig = {
     },
     rebuildConfig: {},
     makers: [
+        // Windows：ZIP 便携版由发布流程另行打包（见 scripts/package-win.mjs），
+        // 此处无需安装额外 maker——仓库刻意保持最小依赖集。
         new MakerDMG({
             format: 'ULFO',
         }),
+        // Linux
         new MakerDeb({
             options: {
                 bin: 'MusicFree',
