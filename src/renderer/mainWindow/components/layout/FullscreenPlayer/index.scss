@@ -66,8 +66,53 @@
         flex-shrink: 0;
         display: flex;
         align-items: center;
+        justify-content: space-between;
         padding: var(--space-6) var(--space-10);
         -webkit-app-region: drag;
+    }
+
+    // ── 窗口控制（最小化 / 最大化 / 关闭） ──
+
+    &__window-controls {
+        display: flex;
+        align-items: center;
+        gap: var(--space-2);
+        -webkit-app-region: no-drag;
+    }
+
+    &__window-btn {
+        border: none;
+        background: none;
+        padding: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: var(--size-control-md);
+        height: var(--size-control-md);
+        border-radius: var(--radius-pill);
+        color: var(--color-text-primary);
+        cursor: pointer;
+        transition: background-color var(--duration-normal) var(--ease-standard);
+
+        &:hover {
+            background-color: var(--color-fill-subtle-hover);
+        }
+
+        &:active {
+            opacity: var(--opacity-pressed);
+        }
+
+        &:focus-visible {
+            outline: none;
+            box-shadow:
+                0 0 0 var(--focus-ring-offset) var(--color-bg-fullscreen),
+                var(--focus-ring);
+        }
+
+        &--close:hover {
+            background-color: var(--color-status-danger-fill);
+            color: #ffffff;
+        }
     }
 
     &__close-btn {

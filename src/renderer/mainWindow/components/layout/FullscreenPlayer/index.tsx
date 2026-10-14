@@ -5,7 +5,15 @@
 import { useState, useEffect, useCallback, useRef, memo } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronDown, MoreHorizontal, Languages, TextCursorInput } from 'lucide-react';
+import {
+    ChevronDown,
+    MoreHorizontal,
+    Languages,
+    TextCursorInput,
+    Minus,
+    Square,
+    X,
+} from 'lucide-react';
 import { DesktopLyric } from '@renderer/common/icons';
 import { useAtomValue } from 'jotai/react';
 import { useTranslation } from 'react-i18next';
@@ -14,6 +22,8 @@ import { transition as motionTransition } from '@common/motionTokens';
 import { useCurrentMusic, useLyric } from '@renderer/mainWindow/core/trackPlayer/hooks';
 import { useConfigValue } from '@renderer/common/hooks/useConfigValue';
 import { syncKV } from '@renderer/common/kvStore';
+import appConfig from '@infra/appConfig/renderer';
+import systemUtil from '@infra/systemUtil/renderer';
 import defaultCover from '@assets/imgs/album-cover.jpg';
 import { fullscreenPlayerOpenAtom, closeFullscreenPlayer } from './fullscreenPlayerState';
 import LyricPanel from './LyricPanel';
@@ -42,10 +52,24 @@ const FullscreenPlayer = memo(function FullscreenPlayer() {
     // 歌词设置状态
     const [settingsOpen, setSettingsOpen] = useState(false);
     const [fontScale, setFontScale] = useState(() => syncKV.get('player.lyricFontScale') ?? 1);
-    const [showTranslation, setShowTranslation] = useState(
-        () => syncKV.get('player.showLyricTranslation') ?? true,
-    );
     const [isSelectable, setIsSelectable] = useState(false);
+
+    /**
+     * 翻译开关统一由 appConfig 的 `lyric.showTranslation` 驱动，
+     * 与桌面歌词窗口共用同一项配置，避免两处开关并存、状态不一致。
+     *
+     * 旧版本把该偏好存在 syncKV 的 `player.showLyricTranslation`，
+     * 此处做一次性迁移，避免老用户升级后偏好丢失。
+     */
+    const [showTranslationConfig, setShowTranslation] = useConfigValue('lyric.showTranslation');
+    const showTranslation = showTranslationConfig ?? true;
+    useEffect(() => {
+        const legacy = syncKV.get('player.showLyricTranslation');
+        if (legacy !== null && appConfig.getConfigByKey('lyric.showTranslation') === undefined) {
+            appConfig.setConfig({ 'lyric.showTranslation': legacy });
+        }
+        syncKV.remove('player.showLyricTranslation');
+    }, []);
 
     // Escape 关闭
     useEffect(() => {
@@ -74,12 +98,13 @@ const FullscreenPlayer = memo(function FullscreenPlayer() {
         syncKV.set('player.lyricFontScale', scale);
     }, []);
 
-    /** 翻译开关变化 — 持久化到 SyncKV */
-    const handleShowTranslationChange = useCallback((show: boolean) => {
-        setShowTranslation(show);
-        syncKV.set('player.showLyricTranslation', show);
-    }, []);
-
+    /** 翻译开关变化 — 写入共享配置（桌面歌词窗口同步生效） */
+    const handleShowTranslationChange = useCallback(
+        (show: boolean) => {
+            setShowTranslation(show);
+        },
+        [setShowTranslation],
+    );
     /** 关闭设置面板 */
     const handleSettingsClose = useCallback(() => {
         setSettingsOpen(false);
@@ -108,6 +133,25 @@ const FullscreenPlayer = memo(function FullscreenPlayer() {
 
     const handleSelectableToggle = useCallback(() => {
         setIsSelectable((prev) => !prev);
+    }, []);
+
+    /** 最小化窗口 */
+    const handleWindowMinimize = useCallback(() => {
+        systemUtil.minimizeWindow();
+    }, []);
+
+    /** 最大化 / 还原窗口 */
+    const handleWindowMaximize = useCallback(() => {
+        systemUtil.toggleMaximize();
+    }, []);
+
+    /** 关闭窗口 — 与 TopBar 行为一致，遵循 normal.closeBehavior 配置 */
+    const handleWindowClose = useCallback(() => {
+        if (appConfig.getConfigByKey('normal.closeBehavior') === 'exit_app') {
+            systemUtil.exitApp();
+        } else {
+            systemUtil.minimizeWindow(true);
+        }
     }, []);
 
     return createPortal(
@@ -145,6 +189,37 @@ const FullscreenPlayer = memo(function FullscreenPlayer() {
                         >
                             <ChevronDown size={32} />
                         </button>
+
+                        {/* ── 窗口控制（最小化 / 最大化 / 关闭） ── */}
+                        <div className="l-fullscreen-player__window-controls">
+                            <button
+                                type="button"
+                                className="l-fullscreen-player__window-btn"
+                                onClick={handleWindowMinimize}
+                                title={t('app.minimize')}
+                                aria-label={t('app.minimize')}
+                            >
+                                <Minus size={18} />
+                            </button>
+                            <button
+                                type="button"
+                                className="l-fullscreen-player__window-btn"
+                                onClick={handleWindowMaximize}
+                                title={t('app.maximize')}
+                                aria-label={t('app.maximize')}
+                            >
+                                <Square size={15} />
+                            </button>
+                            <button
+                                type="button"
+                                className="l-fullscreen-player__window-btn l-fullscreen-player__window-btn--close"
+                                onClick={handleWindowClose}
+                                title={t('common.close')}
+                                aria-label={t('common.close')}
+                            >
+                                <X size={18} />
+                            </button>
+                        </div>
                     </div>
 
                     {/* ── Body — 左封面 + 右歌词 ── */}
