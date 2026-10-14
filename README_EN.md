@@ -1,18 +1,11 @@
 <div align="center">
 
-# 🎵 MusicFree Desktop
+# 🎵 MusicFree Desktop · Plus
 
 **A plugin-based, customizable, ad-free music player**
 
-[![GitHub Stars](https://img.shields.io/github/stars/maotoumao/MusicFreeDesktop?style=flat&logo=github&color=yellow)](https://github.com/maotoumao/MusicFreeDesktop/stargazers)
-[![GitHub Forks](https://img.shields.io/github/forks/maotoumao/MusicFreeDesktop?style=flat&logo=github)](https://github.com/maotoumao/MusicFreeDesktop/network/members)
-[![GitCode Stars](https://gitcode.com/maotoumao/MusicFreeDesktop/star/badge.svg)](https://gitcode.com/maotoumao/MusicFreeDesktop)
-[![License](https://img.shields.io/github/license/maotoumao/MusicFreeDesktop?style=flat&color=blue)](./LICENSE)
-[![Downloads](https://img.shields.io/github/downloads/maotoumao/MusicFreeDesktop/total?style=flat&color=green)](https://github.com/maotoumao/MusicFreeDesktop/releases)
-[![Issues](https://img.shields.io/github/issues/maotoumao/MusicFreeDesktop?style=flat)](https://github.com/maotoumao/MusicFreeDesktop/issues)
-[![Version](https://img.shields.io/github/package-json/v/maotoumao/MusicFreeDesktop?style=flat&color=orange)](./package.json)
-
-<a href="https://trendshift.io/repositories/3961" target="_blank"><img src="https://trendshift.io/api/badge/repositories/3961" alt="maotoumao%2FMusicFreeDesktop | Trendshift" style="width: 250px; height: 55px;" width="250" height="55"/></a>
+[![License](https://img.shields.io/badge/license-AGPL--3.0--only-blue)](./LICENSE)
+[![Version](https://img.shields.io/badge/version-1.0.0--beta.4-orange)](./package.json)
 
 English | **[简体中文](./README.md)**
 
@@ -21,210 +14,127 @@ English | **[简体中文](./README.md)**
 ---
 
 > [!IMPORTANT]
-> **Usage Agreement**
->
-> This project is open-sourced under the [AGPL 3.0](./LICENSE) license. Please comply with the license when using this project. Additionally, please be aware of the following:
->
-> 1. When packaging or redistributing, **please credit the source**: https://github.com/maotoumao/MusicFree
-> 2. Do not use for commercial purposes; use the code legally and compliantly
-> 3. If the license changes, it will be updated in this GitHub repository without separate notice
+> **This repository is a derivative of [maotoumao/MusicFreeDesktop](https://github.com/maotoumao/MusicFreeDesktop)** (`dev` branch, `1.0.0-beta.4`), released under **AGPL-3.0-only** with original copyright notices and license preserved in full. The modifications are described in "What this Plus version adds" below and in [CHANGELOG.md](./CHANGELOG.md).
+
+### Acknowledgements
+
+This project is derived from [maotoumao/MusicFreeDesktop](https://github.com/maotoumao/MusicFreeDesktop). **Thanks to the original author maotoumao and everyone who has contributed to MusicFree** — this work stands on their shoulders.
 
 ---
 
-## ✨ Introduction
+## ✨ What this Plus version adds
 
-A plugin-based, customizable, ad-free music player for **Windows**, **macOS**, and **Linux**.
+Each change below came from using the app and thinking "it would be nice if it worked like this". See [CHANGELOG.md](./CHANGELOG.md) for the full record.
 
-### 📥 Download
-
-👉 [Feishu Cloud Drive](https://r0rvr854dd1.feishu.cn/drive/folder/IrVEfD67KlWZGkdqwjecLHFNnBb?from=from_copylink)
-
----
-
-## 🚀 Features
-
-|       Feature       | Description                                                                                                                                                                                                                                                       |
-| :-----------------: | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **🔌 Plugin-based** | MusicFree is purely a player — it **does not bundle** any music sources. All search, playback, and playlist import features are powered by **plugins**. As long as a plugin exists for a music source on the internet, you can search and play it with MusicFree. |
-| **🎨 Customizable** | Customize the app's appearance and background via theme packs, with a brand-new semantic CSS variable system and iframe backgrounds. See [Theme Packs](#-theme-packs) below.                                                                                      |
-|   **🚫 Ad-free**    | Open-sourced under AGPL 3.0, and will remain free.                                                                                                                                                                                                                |
-|   **🔒 Privacy**    | All data is stored locally. Your personal information is never uploaded.                                                                                                                                                                                          |
-
-**Plugin-supported features**: Search (music / albums / artists / playlists), playback, album details, artist details, single track import, playlist import, lyrics, top lists, recommended playlists, song comments, multi-quality switching (standard / high / super / lossless).
+1. **🌊 "Roam" mode for local music** — added as a fourth playback mode (queue → shuffle → loop → roam), picking the next track dynamically by "familiarity" plus similarity (same artist / album / folder), with an adjustable familiarity slider and a random first track
+2. **🎤 Artist classification improvements** — tags like `Artist A/Artist B` and `A feat. B` are recognized as separate artists; case variants such as `LISA` / `LiSA` and `MIRROR` / `Mirror` merge into one artist
+3. **🎼 Desktop lyric enhancements** — a translation line below the main lyric, with the toolbar moved to an overlay so it no longer pushes lyrics down. Supports both separate `-tr.lrc` files and the multi-line-same-timestamp inline bilingual format
+4. **⬇️ Batch download with unified quality** — a "Download Selected" button next to "Play All" on every list page, paired with new visible checkboxes (select-all in the header plus a per-row checkbox) and a single quality choice for all selected songs, including "Highest / Lowest Available"
+5. **🪟 Window controls in the fullscreen player** — minimize / maximize / close
+6. **🔧 Build fixes** — packaging failures under pnpm 11 caused by a degraded dependency tree and uncompiled native modules
 
 ---
 
-## 🔌 Plugins
+## 📥 Usage
 
-MusicFree's core capabilities are driven by plugins. The plugin protocol is compatible with the [Android version](https://github.com/maotoumao/MusicFree), with additional features available on desktop.
+> [!NOTE]
+> **Regular users do not need Node.js or pnpm** — both are only required to build from source.
 
-### Plugin Repository
+### Download and run (Windows)
 
-- **Example plugins**: [MusicFreePlugins](https://github.com/maotoumao/MusicFreePlugins)
-- **Documentation**: [Plugin Development Guide](https://musicfree.catcat.work/plugin/introduction.html)
+Head to [Releases](../../releases) for the latest build. Extract and run `MusicFree.exe`:
 
-### Plugin Capabilities
+- **Portable (ZIP)**: extract and run — no installation, no admin rights; data lives in `%APPDATA%\MusicFree`, separate from the program directory, so deleting the folder uninstalls it
+- The SHA256 is included in each release notes for verification
 
-```
-Search ─── Music / Albums / Artists / Playlists
-Play   ─── Multi-quality switching · Source redirect
-Content ── Album details · Artist works · Lyrics · Comments
-Discover ─ Top lists · Recommended playlists · Playlist categories
-Import ─── Single track import · Playlist import
-```
+> [!IMPORTANT]
+> This project **bundles no music source plugins** — sources must be imported through "Plugin Management" before online search and playback work. See [MusicFreePlugins](https://github.com/maotoumao/MusicFreePlugins).
 
-### Plugin Sandbox
-
-Plugins run in a secure sandbox with access to the following built-in modules:
-
-`axios` · `cheerio` · `dayjs` · `big-integer` · `qs` · `he` · `crypto-js` · `webdav`
-
----
-
-## 🎨 Theme Packs
-
-MusicFree supports full UI customization through theme packs. Two themes are built in: **Light** and **Pure Black (AMOLED)**.
-
-### Theme Pack Structure
-
-A theme pack is a folder (or `.mftheme` archive) containing the following files:
-
-```
-my-theme/
-├── config.json      # Theme configuration (required)
-├── index.css        # Style definitions (required)
-├── preview.png      # Preview image (optional)
-└── iframes/         # iframe backgrounds (optional)
-    └── app.html
-```
-
-### config.json
-
-```jsonc
-{
-    "name": "Theme Name", // Required
-    "preview": "#000000", // Preview color or image path
-    "description": "Theme description",
-    "author": "Author",
-    "authorUrl": "https://...",
-    "version": "1.0.0",
-    "srcUrl": "https://...", // Remote update URL
-    "thumb": "@/thumb.png", // Thumbnail
-    "blurHash": "LEHV6nWB2yk8pyo...", // Loading placeholder (BlurHash)
-    "iframe": {
-        "app": "@/iframes/app.html", // Full app background
-    },
-}
-```
-
-> Use `@/` in paths to reference the theme pack root directory.
-
-### index.css — Semantic CSS Variable System
-
-The new version adopts a **semantic CSS variable** design, organized into six categories by visual purpose. Override these variables in `index.css` to define your theme:
-
-|    Category    |       Prefix       | Purpose                            | Examples                                           |
-| :------------: | :----------------: | ---------------------------------- | -------------------------------------------------- |
-| **Background** |   `--color-bg-*`   | Page, sidebar, modal backgrounds   | `--color-bg-base`, `--color-bg-sidebar`            |
-|    **Fill**    |  `--color-fill-*`  | Buttons, interactive element fills | `--color-fill-brand`, `--color-fill-neutral-hover` |
-|    **Text**    |  `--color-text-*`  | Text colors at various levels      | `--color-text-primary`, `--color-text-secondary`   |
-|   **Border**   | `--color-border-*` | Dividers, borders                  | `--color-border-default`, `--color-border-subtle`  |
-|   **Status**   | `--color-status-*` | Info / Warning / Danger / Success  | `--color-status-danger-text`                       |
-|   **Shadow**   |    `--shadow-*`    | Elevation shadows                  | `--shadow-sm`, `--shadow-lg`                       |
-
-> For the full list of variables, refer to the built-in theme [`res/builtin-themes/light/index.css`](./res/builtin-themes/light/index.css).
-
-### iframe Backgrounds
-
-Use the `iframe.app` field in `config.json` to set any HTML page as the app background, enabling particle effects, animations, and other visuals that pure CSS cannot achieve. Both local HTML files and remote URLs are supported.
-
-### Theme Pack Examples
-
-Example repository: https://github.com/maotoumao/MusicFreeThemePacks
-
----
-
-## 🛠️ Getting Started
-
-### Prerequisites
+### Building from source
 
 | Dependency | Version |
 | :--------: | :-----: |
 |  Node.js   |  >= 18  |
 |    pnpm    | latest  |
 
-### Quick Start
-
 ```bash
 # Clone the repository
-git clone https://github.com/maotoumao/MusicFreeDesktop.git
-cd MusicFreeDesktop
+git clone https://github.com/Y-ian-0729/MusicFreeDesktop-IAN.git
+cd MusicFreeDesktop-IAN
 
-# Install dependencies
+# Install (first run downloads Electron and compiles native modules; can take a while)
 pnpm install
 
 # Start the app
 pnpm start
 
-# Development mode (with Electron DevTools)
-pnpm run dev
+# Build installers
+pnpm run make
 ```
 
-### Available Commands
+> **Slow downloads?** Electron's binary is fetched from GitHub by default. You can set a mirror first:
+>
+> ```powershell
+> # Windows PowerShell
+> $env:ELECTRON_MIRROR = "https://registry.npmmirror.com/-/binary/electron/"
+> pnpm install
+> ```
 
-|      Command      | Description      |
-| :---------------: | ---------------- |
-|   `pnpm start`    | Launch the app   |
-|  `pnpm run dev`   | Development mode |
-|  `pnpm run make`  | Build installers |
-|  `pnpm run lint`  | Run linter       |
-| `pnpm run format` | Format code      |
+#### Common commands
+
+|      Command      | Description          |
+| :---------------: | -------------------- |
+|   `pnpm start`    | Start the app        |
+|  `pnpm run dev`   | Development mode     |
+|  `pnpm run make`  | Build installers     |
+|  `pnpm run lint`  | Lint the code        |
+| `pnpm run format` | Format the code      |
+
+---
+
+## 📦 Scope of changes
+
+To make review and future upstream rebases easier, new code is concentrated in a few self-contained modules:
+
+| Module | Path | Responsibility |
+| --- | --- | --- |
+| Artist tag parsing | `src/common/artistUtils.ts` | Pure functions: split, normalize, pick display name |
+| Roam engine | `src/renderer/mainWindow/core/roam/` | Pure scoring + session ring + play-stat persistence |
+| Batch download button | `.../business/BatchDownloadButton/` | Toolbar entry point |
+| Batch download modal | `.../business/modals/BatchDownloadModal/` | Quality selection and chunked submission |
+| Selection checkboxes | `.../business/SongTable/` | Header select-all + per-row checkbox |
+
+**Database change**: a `quality_fallback` column was added to `download_tasks` (schema v5 → v6) to persist the batch-download quality fallback direction. **Upgrades migrate automatically and do not affect existing data.**
+
+---
+
+## ⚠️ Known limitations
+
+- Local music metadata only parses **title / artist / album / duration / folder** — there is **no genre, BPM or year**. Roam's similarity is therefore limited to artist, album and folder; **roaming by genre is not possible.**
+- Roam's "familiarity" comes from local play counts, so it is **empty on first use** and needs some listening time before preferences show.
+- Batch download depends on what the source plugin actually returns; **if no quality is available for a song, that track is skipped.**
 
 ---
 
 ## 🤝 Contributing
 
-Contributions are welcome! Please read the [Contributing Guide](./CONTRIBUTING.md) for development guidelines and submission process.
+Issues and PRs are welcome. Please read the [Contributing Guide](./CONTRIBUTING.md) first.
 
 ---
 
-## � Support This Project
+## 📄 License
 
-If you enjoy this project or would like to see it maintained, you can support it by:
+Released under **[AGPL-3.0-only](./LICENSE)**, consistent with upstream.
 
-1. ⭐ Starring this repo and sharing it with others
-2. Following the WeChat channel【一只猫头猫】for updates
-
-<img src="./src/assets/imgs/wechat_channel.jpg" height="160px" title="WeChat Channel" />
+- Original copyright notices, author attribution and the `LICENSE` file are preserved in full, with no deletions
+- All modifications are recorded in [CHANGELOG.md](./CHANGELOG.md) and [NOTICE.md](./NOTICE.md)
+- Per AGPL-3.0 section 5(a), modified source files are explicitly marked in the commit history
 
 ---
 
-## 📸 Screenshots
+## 🙏 Acknowledgements
 
-#### Home
+This project is derived from [maotoumao/MusicFreeDesktop](https://github.com/maotoumao/MusicFreeDesktop). Thanks to the original author maotoumao and everyone who has contributed to MusicFree.
 
-![Home](./.imgs/screenshot-home.png)
-
-#### Search
-
-![Search](./.imgs/screenshot-search.png)
-
-#### Plugin Manager
-
-![Plugin Manager](./.imgs/screenshot-plugin.png)
-
-#### Themes
-
-![Themes](./.imgs/screenshot-theme.png)
-
-#### Settings
-
-![Settings](./.imgs/screenshot-settings.png)
-
-#### Mini Mode
-
-<div align="center">
-
-![Mini Mode](./.imgs/screenshot-minimode.png)
-
-</div>
+- [maotoumao/MusicFree](https://github.com/maotoumao/MusicFree) — the Android app and plugin protocol
+- [MusicFreePlugins](https://github.com/maotoumao/MusicFreePlugins) · [MusicFreeThemePacks](https://github.com/maotoumao/MusicFreeThemePacks)
