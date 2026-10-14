@@ -27,6 +27,7 @@ export function GeneralSection() {
     const [taskbarThumb, setTaskbarThumb] = useConfigValue('normal.taskbarThumb');
     const [columnsHidden, setColumnsHidden] = useConfigValue('normal.musicListHideColumns');
     const [useCustomTrayMenu, setUseCustomTrayMenu] = useConfigValue('normal.useCustomTrayMenu');
+    const [splitMultiArtist, setSplitMultiArtist] = useConfigValue('localMusic.splitMultiArtist');
 
     const langNames = useLangNames();
     const [cacheSize, setCacheSize] = useState('--');
@@ -188,6 +189,13 @@ export function GeneralSection() {
                     }
                 />
             )}
+            <SettingRow
+                label={t('settings.general.split_artist_label')}
+                description={t('settings.general.split_artist_desc')}
+                control={
+                    <Toggle checked={splitMultiArtist ?? true} onChange={setSplitMultiArtist} />
+                }
+            />
             <SettingRow
                 label={t('settings.general.cache_label')}
                 description={t('settings.general.cache_desc')}

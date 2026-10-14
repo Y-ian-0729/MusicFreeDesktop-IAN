@@ -17,7 +17,12 @@ import { StatusPlaceholder } from '../../../components/ui/StatusPlaceholder';
 import { ScrollArea } from '../../../components/ui/ScrollArea';
 import { useStatusColumn, useRowContextMenu, useSelection } from '../hooks';
 import type { HideableColumn } from '../../../components/business/SongTable';
-import { filteredLocalMusicAtom, artistListAtom } from '../store';
+import {
+    filteredLocalMusicAtom,
+    artistListAtom,
+    splitMultiArtistAtom,
+    songBelongsToArtist,
+} from '../store';
 
 const HIDE_COLUMNS: HideableColumn[] = ['platform', 'artist'];
 
@@ -33,6 +38,7 @@ export function ArtistsTab({ isEmpty, searchKeyword }: ArtistsTabProps) {
     // ── 从 store 同步读取 ──
     const allSongs = useAtomValue(filteredLocalMusicAtom);
     const artists = useAtomValue(artistListAtom);
+    const splitMultiArtist = useAtomValue(splitMultiArtistAtom);
 
     // ── 过滤歌手列表 ──
     const filteredArtists = useMemo(() => {
@@ -49,11 +55,11 @@ export function ArtistsTab({ isEmpty, searchKeyword }: ArtistsTabProps) {
         return filteredArtists.length > 0 ? filteredArtists[0].artist : null;
     }, [selectedArtist, filteredArtists]);
 
-    // ── 按选中歌手过滤歌曲（同步） ──
+    // ── 按选中歌手过滤歌曲（同步，口径与 artistListAtom 一致） ──
     const songsForArtist = useMemo(() => {
         if (effectiveSelected === null) return [];
-        return allSongs.filter((s) => s.artist === effectiveSelected);
-    }, [allSongs, effectiveSelected]);
+        return allSongs.filter((s) => songBelongsToArtist(s, effectiveSelected, splitMultiArtist));
+    }, [allSongs, effectiveSelected, splitMultiArtist]);
 
     // ── 搜索过滤歌曲 ──
     const filteredMusic = useMemo(() => {

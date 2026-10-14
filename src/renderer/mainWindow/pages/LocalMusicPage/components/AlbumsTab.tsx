@@ -17,7 +17,12 @@ import { StatusPlaceholder } from '../../../components/ui/StatusPlaceholder';
 import { ScrollArea } from '../../../components/ui/ScrollArea';
 import { useStatusColumn, useRowContextMenu, useSelection } from '../hooks';
 import type { HideableColumn } from '../../../components/business/SongTable';
-import { filteredLocalMusicAtom, albumListAtom } from '../store';
+import {
+    filteredLocalMusicAtom,
+    albumListAtom,
+    splitMultiArtistAtom,
+    albumArtistOf,
+} from '../store';
 
 const HIDE_COLUMNS: HideableColumn[] = ['platform', 'album'];
 
@@ -35,6 +40,7 @@ export function AlbumsTab({ isEmpty, searchKeyword }: AlbumsTabProps) {
     // ── 从 store 同步读取 ──
     const allSongs = useAtomValue(filteredLocalMusicAtom);
     const albums = useAtomValue(albumListAtom);
+    const splitMultiArtist = useAtomValue(splitMultiArtistAtom);
 
     // ── 过滤专辑列表 ──
     const filteredAlbums = useMemo(() => {
@@ -61,15 +67,15 @@ export function AlbumsTab({ isEmpty, searchKeyword }: AlbumsTabProps) {
             : null;
     }, [selectedAlbum, filteredAlbums]);
 
-    // ── 按选中专辑过滤歌曲（同步） ──
+    // ── 按选中专辑过滤歌曲（同步，口径与 albumListAtom 一致） ──
     const songsForAlbum = useMemo(() => {
         if (!effectiveSelected) return [];
         return allSongs.filter(
             (s) =>
                 (s.album ?? '') === effectiveSelected.album &&
-                s.artist === effectiveSelected.artist,
+                albumArtistOf(s, splitMultiArtist) === effectiveSelected.artist,
         );
-    }, [allSongs, effectiveSelected]);
+    }, [allSongs, effectiveSelected, splitMultiArtist]);
 
     // ── 搜索过滤歌曲 ──
     const filteredMusic = useMemo(() => {
