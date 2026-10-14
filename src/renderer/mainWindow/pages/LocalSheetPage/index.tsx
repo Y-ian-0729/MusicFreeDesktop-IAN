@@ -23,6 +23,7 @@ import { MusicSheetHeader } from '../../components/ui/MusicSheetHeader';
 import { SongTable, type RowInteractionDetail } from '../../components/business/SongTable';
 import { FavoriteButton } from '../../components/business/FavoriteButton';
 import { DownloadButton } from '../../components/business/DownloadButton';
+import { BatchDownloadButton } from '../../components/business/BatchDownloadButton';
 import { SongToolbar } from '../../components/ui/SongToolbar';
 import { ListFooter } from '../../components/ui/ListFooter';
 import { StatusPlaceholder } from '../../components/ui/StatusPlaceholder';
@@ -102,6 +103,13 @@ export default function LocalSheetPage() {
     useEffect(() => {
         setSelectedIds(new Set());
     }, [id, deferredSearchValue]);
+
+    // 选中项解析为完整歌曲对象（批量下载需要），并复用同一份选中状态
+    const selectedForDownload = useMemo(
+        () => musicList.filter((item) => selectedIds.has(String(item.id))) as IMusic.IMusicItem[],
+        [musicList, selectedIds],
+    );
+    const clearSelection = useCallback(() => setSelectedIds(new Set()), []);
 
     // 搜索时禁用拖拽（过滤后的索引与原始数组不一致）
     const isSearching = deferredSearchValue.trim().length > 0;
@@ -245,6 +253,10 @@ export default function LocalSheetPage() {
                     >
                         {t('playlist.add_to_sheet_menu')}
                     </Button>
+                    <BatchDownloadButton
+                        selectedItems={selectedForDownload}
+                        onDone={clearSelection}
+                    />
                 </SongToolbar>
             </div>
 

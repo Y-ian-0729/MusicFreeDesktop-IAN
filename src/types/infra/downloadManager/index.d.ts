@@ -7,6 +7,15 @@ export type DownloadStatus = 'pending' | 'downloading' | 'paused' | 'completed' 
 /** 活跃下载任务状态（completed 后从 activeTaskMap 中移除，不会出现） */
 export type ActiveDownloadStatus = Exclude<DownloadStatus, 'completed'>;
 
+/**
+ * 音质回退方向。
+ *
+ * - `lower`：从请求音质向下回退 → 配合请求 `super` 即「尽可能最高音质」
+ * - `higher`：从请求音质向上回退 → 配合请求 `low` 即「尽可能最低音质」
+ * - `null`：未指定，沿用全局配置 `download.whenQualityMissing`
+ */
+export type QualityFallbackOrder = 'higher' | 'lower';
+
 /** 下载任务（与 download_tasks 表结构对应） */
 export interface IDownloadTask {
     /** 任务唯一 ID */
@@ -23,6 +32,8 @@ export interface IDownloadTask {
     album: string;
     /** 目标音质 */
     quality: IMusic.IQualityKey;
+    /** 音质回退方向；null 表示沿用全局配置 */
+    qualityFallback: QualityFallbackOrder | null;
     /** 当前状态 */
     status: DownloadStatus;
     /** 最终保存路径 */
@@ -54,6 +65,7 @@ export interface IDownloadTaskRow {
     artist: string;
     album: string;
     quality: string;
+    quality_fallback: string | null;
     status: string;
     file_path: string | null;
     temp_path: string | null;
@@ -81,6 +93,22 @@ export interface IAddDownloadParams {
     musicItem: IMusic.IMusicItem | IMusicItemSlim;
     /** 指定音质，默认取 download.defaultQuality */
     quality?: IMusic.IQualityKey;
+    /**
+     * 音质回退方向；省略时沿用全局配置 `download.whenQualityMissing`。
+     *
+     * 用于「全部最高音质」（quality=super + fallback=lower）与
+     * 「全部最低音质」（quality=low + fallback=higher）。
+     */
+    qualityFallbackOrder?: QualityFallbackOrder;
+}
+
+/** 批量添加下载任务参数 */
+export interface IAddDownloadTasksBatchParams {
+    musicItems: Array<IMusic.IMusicItem | IMusicItemSlim>;
+    /** 指定音质，默认取 download.defaultQuality */
+    quality?: IMusic.IQualityKey;
+    /** 音质回退方向；省略时沿用全局配置 */
+    qualityFallbackOrder?: QualityFallbackOrder;
 }
 
 /** 下载任务状态变更事件 */

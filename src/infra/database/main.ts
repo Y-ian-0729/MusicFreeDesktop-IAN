@@ -208,6 +208,15 @@ class DatabaseInfra implements IDatabaseProvider {
                         ON local_music(platform, music_id);
                 `);
             },
+
+            // ─── v5 → v6: download_tasks 增加 quality_fallback（批量下载「全部最高/最低音质」） ───
+            // 任务在 enqueueTask 时才真正取源，且可能跨重启 resume/retry，
+            // 因此回退方向必须持久化，否则重启后「最高音质」的意图会丢失。
+            (db) => {
+                db.exec(`
+                    ALTER TABLE download_tasks ADD COLUMN quality_fallback TEXT;
+                `);
+            },
         ];
 
         if (currentVersion < migrations.length) {

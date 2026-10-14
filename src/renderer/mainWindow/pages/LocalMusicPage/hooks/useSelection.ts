@@ -1,29 +1,6 @@
-import { useState, useEffect, useMemo, type DependencyList } from 'react';
-
 /**
- * Manages multi-selection state for SongTable instances.
+ * 兼容转发：多选状态 hook 已提升为跨页面共享实现。
  *
- * @param resetDeps - When any dependency changes, the selection is cleared.
- *                    Typical deps: search keyword, selected artist/album, etc.
- * @returns `selectedIds`, `setSelectedIds`, and `selectionProps` that can be
- *          spread directly onto `<SongTable />`.
+ * 保留此文件以免改动 LocalMusicPage 既有的 `../hooks` 引用路径。
  */
-export function useSelection(resetDeps: DependencyList) {
-    const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
-
-    // Reset selection when dependencies change
-    useEffect(() => {
-        setSelectedIds(new Set());
-    }, resetDeps);
-
-    const selectionProps = useMemo(
-        () => ({
-            enableSelection: true as const,
-            selectedIds,
-            onSelectionChange: setSelectedIds,
-        }),
-        [selectedIds],
-    );
-
-    return { selectedIds, setSelectedIds, selectionProps };
-}
+export { useSelection } from '../../../hooks/useSelection';

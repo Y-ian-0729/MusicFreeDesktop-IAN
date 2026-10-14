@@ -17,6 +17,8 @@ import { MusicSheetHeader } from '../../components/ui/MusicSheetHeader';
 import { SongTable, type RowInteractionDetail } from '../../components/business/SongTable';
 import { FavoriteButton } from '../../components/business/FavoriteButton';
 import { DownloadButton } from '../../components/business/DownloadButton';
+import { BatchDownloadButton } from '../../components/business/BatchDownloadButton';
+import { useBatchDownloadSelection } from '../../hooks/useBatchDownloadSelection';
 import { SongToolbar } from '../../components/ui/SongToolbar';
 import { ListFooter } from '../../components/ui/ListFooter';
 import { StatusPlaceholder } from '../../components/ui/StatusPlaceholder';
@@ -60,6 +62,13 @@ export default function ToplistDetailPage() {
                 (item.album ?? '').toLowerCase().includes(keyword),
         );
     }, [musicList, deferredSearch]);
+
+    // ── 多选 + 批量下载（搜索词变化时重置） ──
+    const {
+        selectedItems: selectedForDownload,
+        clearSelection,
+        selectionProps,
+    } = useBatchDownloadSelection(filteredList, [deferredSearch]);
 
     // ── 操作回调 ──
     const handlePlayAll = useCallback(() => {
@@ -117,6 +126,10 @@ export default function ToplistDetailPage() {
                     >
                         {t('playlist.add_to_sheet_menu')}
                     </Button>
+                    <BatchDownloadButton
+                        selectedItems={selectedForDownload}
+                        onDone={clearSelection}
+                    />
                 </SongToolbar>
             </div>
 
@@ -136,6 +149,7 @@ export default function ToplistDetailPage() {
                     </>
                 )}
                 onRowContextMenu={handleRowContextMenu}
+                {...selectionProps}
             />
 
             {isEnd && musicList.length > 0 && <ListFooter status={RequestStatus.Done} />}

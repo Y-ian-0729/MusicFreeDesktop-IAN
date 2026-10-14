@@ -30,6 +30,8 @@ import type {
     IPluginManagerForDownload,
     IDownloadedSheetProvider,
     IAddDownloadParams,
+    IAddDownloadTasksBatchParams,
+    QualityFallbackOrder,
 } from '@appTypes/infra/downloadManager';
 import type { IMusicItemSlim, IMusicItemProvider } from '@appTypes/infra/musicSheet';
 import type { IMediaMetaProvider } from '@appTypes/infra/mediaMeta';
@@ -46,6 +48,7 @@ function rowToTask(row: IDownloadTaskRow): IDownloadTask {
         artist: row.artist,
         album: row.album,
         quality: row.quality as IMusic.IQualityKey,
+        qualityFallback: (row.quality_fallback as QualityFallbackOrder | null) ?? null,
         status: row.status as DownloadStatus,
         filePath: row.file_path,
         tempPath: row.temp_path,
@@ -177,10 +180,12 @@ class DownloadManager {
             insertTask: db.prepare(`
                 INSERT INTO download_tasks
                     (id, platform, music_id, title, artist, album, quality,
+                     quality_fallback,
                      status, file_path, temp_path, total_bytes, downloaded_bytes,
                      media_source, music_item_raw, error, created_at, updated_at)
                 VALUES
                     (@id, @platform, @musicId, @title, @artist, @album, @quality,
+                     @qualityFallback,
                      @status, @filePath, @tempPath, @totalBytes, @downloadedBytes,
                      @mediaSource, @musicItemRaw, @error, @createdAt, @updatedAt)
             `),
@@ -189,6 +194,7 @@ class DownloadManager {
                 UPDATE download_tasks SET
                     status = @status,
                     quality = @quality,
+                    quality_fallback = @qualityFallback,
                     file_path = @filePath,
                     total_bytes = @totalBytes,
                     downloaded_bytes = @downloadedBytes,
@@ -255,21 +261,16 @@ class DownloadManager {
 
     private registerIpcHandlers(): void {
         ipcMain.handle(IPC.ADD_TASK, async (_evt, params: IAddDownloadParams) => {
-            return this.addTask(params.musicItem, params.quality);
+            return this.addTask(params.musicItem, params.quality, params.qualityFallbackOrder);
         });
 
-        ipcMain.handle(
-            IPC.ADD_TASKS_BATCH,
-            async (
-                _evt,
-                params: {
-                    musicItems: Array<IMusic.IMusicItem | IMusicItemSlim>;
-                    quality?: IMusic.IQualityKey;
-                },
-            ) => {
-                return this.addTasksBatch(params.musicItems, params.quality);
-            },
-        );
+        ipcMain.handle(IPC.ADD_TASKS_BATCH, async (_evt, params: IAddDownloadTasksBatchParams) => {
+            return this.addTasksBatch(
+                params.musicItems,
+                params.quality,
+                params.qualityFallbackOrder,
+            );
+        });
 
         ipcMain.handle(IPC.PAUSE_TASK, (_evt, taskId: string) => {
             this.pauseTask(taskId);
@@ -320,6 +321,7 @@ class DownloadManager {
     private async addTask(
         musicItem: IMusic.IMusicItem | IMusicItemSlim,
         quality: IMusic.IQualityKey | undefined,
+        qualityFallbackOrder?: QualityFallbackOrder,
     ): Promise<IDownloadTask> {
         const targetQuality =
             quality ?? this.appConfig.getConfigByKey('download.defaultQuality') ?? 'standard';
@@ -357,6 +359,7 @@ class DownloadManager {
             artist: musicItem.artist ?? '',
             album: musicItem.album ?? '',
             quality: targetQuality,
+            qualityFallback: qualityFallbackOrder ?? null,
             status: 'pending',
             filePath,
             tempPath,
@@ -394,9 +397,10 @@ class DownloadManager {
     private async addTasksBatch(
         musicItems: Array<IMusic.IMusicItem | IMusicItemSlim>,
         quality?: IMusic.IQualityKey,
+        qualityFallbackOrder?: QualityFallbackOrder,
     ): Promise<IDownloadTask[]> {
         const results = await Promise.allSettled(
-            musicItems.map((item) => this.addTask(item, quality)),
+            musicItems.map((item) => this.addTask(item, quality, qualityFallbackOrder)),
         );
         return results
             .filter((r): r is PromiseFulfilledResult<IDownloadTask> => r.status === 'fulfilled')
@@ -467,7 +471,11 @@ class DownloadManager {
                         musicItem,
                         task.quality,
                         QUALITY_KEYS,
-                        this.appConfig.getConfigByKey('download.whenQualityMissing') ?? 'lower',
+                        // 任务级回退方向优先（批量下载「全部最高/最低音质」会显式指定），
+                        // 未指定时回落到全局配置
+                        task.qualityFallback ??
+                            this.appConfig.getConfigByKey('download.whenQualityMissing') ??
+                            'lower',
                     );
 
                     if (source?.url) {
@@ -741,6 +749,7 @@ class DownloadManager {
                 artist: '',
                 album: '',
                 quality: 'standard' as IMusic.IQualityKey,
+                qualityFallback: null,
                 status: 'completed' as DownloadStatus,
                 filePath: downloadData.path,
                 tempPath: null,
@@ -806,6 +815,7 @@ class DownloadManager {
                 artist: task.artist,
                 album: task.album,
                 quality: task.quality,
+                qualityFallback: task.qualityFallback,
                 status: task.status,
                 filePath: task.filePath,
                 tempPath: task.tempPath,
@@ -831,6 +841,7 @@ class DownloadManager {
             id: task.id,
             status: task.status,
             quality: task.quality,
+            qualityFallback: task.qualityFallback,
             filePath: task.filePath,
             totalBytes: task.totalBytes,
             downloadedBytes: task.downloadedBytes,

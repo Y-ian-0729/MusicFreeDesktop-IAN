@@ -9,18 +9,16 @@ import { contextBridge, ipcRenderer } from 'electron';
 import { IPC, CONTEXT_BRIDGE_KEY } from './common/constant';
 import type {
     IAddDownloadParams,
+    IAddDownloadTasksBatchParams,
     IDownloadProgress,
     IDownloadTaskEvent,
 } from '@appTypes/infra/downloadManager';
-import type { IMusicItemSlim } from '@appTypes/infra/musicSheet';
 
 const mod = {
     addTask: (params: IAddDownloadParams) => ipcRenderer.invoke(IPC.ADD_TASK, params),
 
-    addTasksBatch: (params: {
-        musicItems: Array<IMusic.IMusicItem | IMusicItemSlim>;
-        quality?: IMusic.IQualityKey;
-    }) => ipcRenderer.invoke(IPC.ADD_TASKS_BATCH, params),
+    addTasksBatch: (params: IAddDownloadTasksBatchParams) =>
+        ipcRenderer.invoke(IPC.ADD_TASKS_BATCH, params),
 
     pauseTask: (taskId: string) => ipcRenderer.invoke(IPC.PAUSE_TASK, taskId),
 

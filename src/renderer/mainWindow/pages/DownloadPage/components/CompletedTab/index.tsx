@@ -16,6 +16,8 @@ import trackPlayer from '@renderer/mainWindow/core/trackPlayer';
 import { SongTable, type RowInteractionDetail } from '../../../../components/business/SongTable';
 import { FavoriteButton } from '../../../../components/business/FavoriteButton';
 import { DownloadButton } from '../../../../components/business/DownloadButton';
+import { BatchDownloadButton } from '../../../../components/business/BatchDownloadButton';
+import { useBatchDownloadSelection } from '../../../../hooks/useBatchDownloadSelection';
 import { SongToolbar } from '../../../../components/ui/SongToolbar';
 import { ListFooter } from '../../../../components/ui/ListFooter';
 import { StatusPlaceholder } from '../../../../components/ui/StatusPlaceholder';
@@ -72,6 +74,13 @@ export function CompletedTab() {
             fromSheetId: DOWNLOADED_SHEET_ID,
         });
     }, [filteredList]);
+
+    // ── 多选 + 批量下载（搜索词变化时重置） ──
+    const {
+        selectedItems: selectedForDownload,
+        clearSelection,
+        selectionProps,
+    } = useBatchDownloadSelection(filteredList, [deferredSearchValue]);
 
     const isSearching = deferredSearchValue.trim().length > 0;
 
@@ -133,7 +142,12 @@ export function CompletedTab() {
                     disabled={isEmpty}
                     onSearchChange={setSearchValue}
                     onPlayAll={handlePlayAll}
-                />
+                >
+                    <BatchDownloadButton
+                        selectedItems={selectedForDownload}
+                        onDone={clearSelection}
+                    />
+                </SongToolbar>
             </div>
 
             {isEmpty ? (
@@ -158,6 +172,7 @@ export function CompletedTab() {
                     )}
                     onRowDoubleClick={handleRowDoubleClick}
                     onRowContextMenu={handleRowContextMenu}
+                    {...selectionProps}
                 />
             )}
 

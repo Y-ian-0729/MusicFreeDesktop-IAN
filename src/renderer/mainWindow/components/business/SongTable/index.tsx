@@ -140,6 +140,19 @@ export interface SongTableProps {
 
     /** 外部滚动容器元素（不传则自动查找 .l-app-shell__content 或回退到 window） */
     scrollParent?: HTMLElement;
+    /**
+     * 选中项浮动操作条。
+     *
+     * 仅在有选中项时渲染，固定在表格底部居中。
+     * 消费方负责内容与行为（例如「下载选中」按钮）。
+     *
+     * @param selectedItems 当前选中的完整歌曲对象
+     * @param clearSelection 清空选中项
+     */
+    selectionToolbar?: (
+        selectedItems: IMusic.IMusicItemBase[],
+        clearSelection: () => void,
+    ) => ReactNode;
     /** 额外 className */
     className?: string;
 }
@@ -265,6 +278,140 @@ function DragOverlayContent({ dragCount }: { dragCount: number }) {
 }
 
 // ────────────────────────────────────────────────────────────────────────────
+// 选择勾选框 — 表头全选 / 行内单选
+//
+// 通过 ref 读取最新的 data / selectedIds / setter：
+// 这两个组件由 TableVirtuoso 渲染，若直接闭包捕获 props，
+// 会因 virtuoso 的 memo 机制拿到过期状态，导致点击无反应。
+// ────────────────────────────────────────────────────────────────────────────
+
+interface ISelectionCheckboxProps {
+    dataRef: React.MutableRefObject<IMusic.IMusicItemBase[]>;
+    selectedIdsRef: React.MutableRefObject<Set<string>>;
+    setSelectedIdsRef: React.MutableRefObject<(ids: Set<string>) => void>;
+}
+
+/** 行内勾选框所需的 ref 集合（不需要 dataRef） */
+type IRowCheckboxRefs = Omit<ISelectionCheckboxProps, 'dataRef'>;
+
+/** 勾选框图形（与 CheckboxGroup 视觉一致） */
+function CheckboxBox({
+    checked,
+    indeterminate,
+    onToggle,
+    label,
+}: {
+    checked: boolean;
+    indeterminate?: boolean;
+    onToggle: () => void;
+    label: string;
+}) {
+    return (
+        <button
+            type="button"
+            role="checkbox"
+            aria-checked={indeterminate ? 'mixed' : checked}
+            aria-label={label}
+            className={cn(
+                'song-table__checkbox',
+                checked && 'is-checked',
+                indeterminate && 'is-indeterminate',
+            )}
+            onClick={(e) => {
+                // 阻止冒泡：否则会触发行点击（改变选中集）
+                e.stopPropagation();
+                onToggle();
+            }}
+            onDoubleClick={(e) => e.stopPropagation()}
+        >
+            {indeterminate ? (
+                <svg className="song-table__checkbox-icon" viewBox="0 0 12 12" fill="none">
+                    <path
+                        d="M2.5 6H9.5"
+                        stroke="currentColor"
+                        strokeWidth="1.5"
+                        strokeLinecap="round"
+                    />
+                </svg>
+            ) : (
+                <svg className="song-table__checkbox-icon" viewBox="0 0 12 12" fill="none">
+                    <path
+                        d="M2.5 6L5 8.5L9.5 3.5"
+                        stroke="currentColor"
+                        strokeWidth="1.5"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                    />
+                </svg>
+            )}
+        </button>
+    );
+}
+
+/** 表头全选勾选框：支持全选 / 全不选 / 半选态 */
+function SelectAllCheckbox({
+    dataRef,
+    selectedIdsRef,
+    setSelectedIdsRef,
+}: ISelectionCheckboxProps) {
+    const { t } = useTranslation();
+    // 与 TableRow 的 isSelected 同一模式：渲染时直接读 ref，保证拿到最新选中集
+    const selectedIds = selectedIdsRef.current;
+    const data = dataRef.current;
+
+    const total = data.length;
+    const selectedCount = total === 0 ? 0 : data.filter((d) => selectedIds.has(d.id)).length;
+    const allSelected = total > 0 && selectedCount === total;
+    const someSelected = selectedCount > 0 && !allSelected;
+
+    const handleToggle = useCallback(() => {
+        const current = dataRef.current;
+        const ids = selectedIdsRef.current;
+        // 已全选 → 清空；否则 → 全选
+        const isAll = current.length > 0 && current.every((d) => ids.has(d.id));
+        setSelectedIdsRef.current(isAll ? new Set() : new Set(current.map((d) => d.id)));
+    }, [dataRef, selectedIdsRef, setSelectedIdsRef]);
+
+    return (
+        <CheckboxBox
+            checked={allSelected}
+            indeterminate={someSelected}
+            onToggle={handleToggle}
+            label={t('common.select_all')}
+        />
+    );
+}
+
+/** 行内勾选框 */
+function RowCheckbox({
+    item,
+    selectedIdsRef,
+    setSelectedIdsRef,
+    lastClickIndexRef,
+    index,
+}: IRowCheckboxRefs & {
+    item: IMusic.IMusicItemBase;
+    lastClickIndexRef: React.MutableRefObject<number>;
+    index: number;
+}) {
+    const checked = selectedIdsRef.current.has(item.id);
+
+    const handleToggle = useCallback(() => {
+        const next = new Set(selectedIdsRef.current);
+        if (next.has(item.id)) {
+            next.delete(item.id);
+        } else {
+            next.add(item.id);
+            // 更新 Shift 范围选区的锚点
+            lastClickIndexRef.current = index;
+        }
+        setSelectedIdsRef.current(next);
+    }, [item.id, index, selectedIdsRef, setSelectedIdsRef, lastClickIndexRef]);
+
+    return <CheckboxBox checked={checked} onToggle={handleToggle} label={item.title ?? ''} />;
+}
+
+// ────────────────────────────────────────────────────────────────────────────
 // SongTable — 主组件
 // ────────────────────────────────────────────────────────────────────────────
 
@@ -321,6 +468,7 @@ export function SongTable({
     hideColumns = appConfig.getConfigByKey('normal.musicListHideColumns'),
     enableSort = false,
     scrollParent: externalScrollParent,
+    selectionToolbar,
     className,
 }: SongTableProps) {
     const { t, i18n } = useTranslation();
@@ -359,6 +507,13 @@ export function SongTable({
 
     const selectedIdsRef = useRef(selectedIds);
     selectedIdsRef.current = selectedIds;
+    /**
+     * 供表头「全选」与行内勾选框调用的 setter。
+     * 这两个子组件位于 virtuosoComponents 内，需通过 ref 读取最新 setter，
+     * 否则会因闭包捕获旧值而写入失效（外部受控模式下尤其明显）。
+     */
+    const setSelectedIdsRef = useRef(setSelectedIds);
+    setSelectedIdsRef.current = setSelectedIds;
     const currentMusicRef = useRef(currentMusic);
     currentMusicRef.current = currentMusic;
 
@@ -536,6 +691,7 @@ export function SongTable({
     const colGroup = useMemo(
         () => (
             <colgroup>
+                {enableSelection && <col key="__select" style={{ width: '44px' }} />}
                 {hasStatusColumn && (
                     <col key="__status" style={{ width: `${statusColumnWidth}px` }} />
                 )}
@@ -556,7 +712,7 @@ export function SongTable({
                 ))}
             </colgroup>
         ),
-        [columns, hasStatusColumn, statusColumnWidth],
+        [columns, hasStatusColumn, statusColumnWidth, enableSelection],
     );
 
     // ── 外部回调 ref（避免 useCallback 依赖外部函数引用） ──
@@ -578,6 +734,9 @@ export function SongTable({
     );
     const resolveSelectedItemsRef = useRef(resolveSelectedItems);
     resolveSelectedItemsRef.current = resolveSelectedItems;
+
+    /** 清空选中项（供浮动操作条使用） */
+    const clearSelection = useCallback(() => setSelectedIds(new Set()), [setSelectedIds]);
 
     // ── 行点击选中逻辑 ──
     const handleRowClick = useCallback(
@@ -726,6 +885,15 @@ export function SongTable({
     const fixedHeaderContent = useCallback(
         () => (
             <tr className="song-table__header-row">
+                {enableSelection && (
+                    <th key="__select" className="song-table__header-cell song-table__header-cell--select">
+                        <SelectAllCheckbox
+                            dataRef={dataRef}
+                            selectedIdsRef={selectedIdsRef}
+                            setSelectedIdsRef={setSelectedIdsRef}
+                        />
+                    </th>
+                )}
                 {hasStatusColumn && (
                     <th key="__status" className="song-table__header-cell">
                         {statusColumnHeader}
@@ -766,13 +934,29 @@ export function SongTable({
                 })}
             </tr>
         ),
-        [columns, hasStatusColumn, statusColumnHeader, sortColumn, sortDirection],
+        [columns, hasStatusColumn, statusColumnHeader, sortColumn, sortDirection, enableSelection, selectedIds],
     );
 
     // ── Virtuoso: 单元格内容 ──
+    // 依赖 selectedIds：勾选框的选中态来自 selectedIdsRef，而 Virtuoso 会对行做记忆化，
+    // 若不改变 itemContent 的引用，选中集变化时可见行不会重渲染，勾选框会「点不动」。
+    // 选中操作由用户触发、频率低，整体重渲染可见行是可接受的代价。
     const itemContent = useCallback(
         (index: number, item: IMusic.IMusicItemBase) => (
             <>
+                {enableSelection && (
+                    <td key="__select" className="song-table__cell song-table__cell--select">
+                        <div className="song-table__cell-content">
+                            <RowCheckbox
+                                item={item}
+                                selectedIdsRef={selectedIdsRef}
+                                setSelectedIdsRef={setSelectedIdsRef}
+                                lastClickIndexRef={lastClickIndexRef}
+                                index={index}
+                            />
+                        </div>
+                    </td>
+                )}
                 {statusColumnRef.current && (
                     <td key="__status" className="song-table__cell song-table__cell--status">
                         <div className="song-table__cell-content">
@@ -794,7 +978,7 @@ export function SongTable({
                 ))}
             </>
         ),
-        [columns],
+        [columns, enableSelection, selectedIds],
     );
 
     // ── Virtuoso: components（仅依赖稳定值，ref 读取最新状态） ──
@@ -952,6 +1136,13 @@ export function SongTable({
                 endReached={enableLoadMore && onLoadMore ? handleEndReached : undefined}
                 components={finalComponents}
             />
+
+            {/* 选中项浮动操作条 */}
+            {selectionToolbar && selectedIds.size > 0 && (
+                <div className="song-table__selection-toolbar">
+                    {selectionToolbar(resolveSelectedItems(selectedIds), clearSelection)}
+                </div>
+            )}
         </div>
     );
 

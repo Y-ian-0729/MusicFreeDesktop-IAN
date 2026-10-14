@@ -6,6 +6,8 @@ import trackPlayer from '@renderer/mainWindow/core/trackPlayer';
 import { SongTable, type RowInteractionDetail } from '../../components/business/SongTable';
 import { FavoriteButton } from '../../components/business/FavoriteButton';
 import { DownloadButton } from '../../components/business/DownloadButton';
+import { BatchDownloadButton } from '../../components/business/BatchDownloadButton';
+import { useBatchDownloadSelection } from '../../hooks/useBatchDownloadSelection';
 import { SongToolbar } from '../../components/ui/SongToolbar';
 import { MediaGrid } from '../../components/ui/MediaGrid';
 import { TabBar, type TabItem } from '../../components/ui/TabBar';
@@ -56,6 +58,14 @@ export default function ArtistPage() {
     const albumWorks = useArtistWorks(originalItem, 'album');
 
     const activeWorks = activeTab === 'music' ? musicWorks : albumWorks;
+
+    // ── 多选 + 批量下载（切换作者 / Tab 时重置） ──
+    const musicList = musicWorks.data as IMusic.IMusicItem[];
+    const { selectedItems, clearSelection, selectionProps } = useBatchDownloadSelection(musicList, [
+        originalItem.platform,
+        originalItem.id,
+        activeTab,
+    ]);
 
     // ── 操作回调 ──
     const handlePlayAll = useCallback(() => {
@@ -122,7 +132,12 @@ export default function ArtistPage() {
                             <SongToolbar
                                 onPlayAll={handlePlayAll}
                                 disabled={musicWorks.data.length === 0}
-                            />
+                            >
+                                <BatchDownloadButton
+                                    selectedItems={selectedItems}
+                                    onDone={clearSelection}
+                                />
+                            </SongToolbar>
                             <SongTable
                                 data={musicWorks.data as IMusic.IMusicItem[]}
                                 requestStatus={
@@ -142,6 +157,7 @@ export default function ArtistPage() {
                                     </>
                                 )}
                                 onRowContextMenu={handleRowContextMenu}
+                                {...selectionProps}
                             />
                             {musicWorks.isEnd && musicWorks.data.length > 0 && (
                                 <ListFooter status={RequestStatus.Done} />

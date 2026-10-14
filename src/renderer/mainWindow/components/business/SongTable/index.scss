@@ -18,11 +18,31 @@
 .song-table {
     width: 100%;
     outline: none; // tabIndex focus ring handled by custom styles if needed
+    position: relative;
 
     &:focus-visible {
         outline: 1px solid var(--color-fill-brand);
         outline-offset: -1px;
         border-radius: var(--radius-control);
+    }
+
+    // ── 选中项浮动操作条 ──
+    // 固定在容器底部居中，浮于列表之上
+    &__selection-toolbar {
+        position: sticky;
+        bottom: var(--space-4);
+        z-index: 30;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: var(--space-3);
+        width: fit-content;
+        margin: 0 auto;
+        padding: var(--space-2) var(--space-4);
+        border: 1px solid var(--color-border-default);
+        border-radius: var(--radius-pill);
+        background-color: var(--color-bg-surface-raised);
+        box-shadow: var(--shadow-md);
     }
 }
 
@@ -187,6 +207,83 @@
             gap: var(--space-2); // 8px
             line-height: normal; // 状态列按 flex 居中，不需要行高撑开
         }
+    }
+
+    // ── 选择列 ──
+    &--select {
+        padding: 0 var(--space-2) 0 var(--space-4);
+
+        .song-table__cell-content {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: visible;
+            line-height: normal;
+        }
+    }
+}
+
+// ── 选择勾选框 ──
+
+.song-table__header-cell--select {
+    padding: 0 var(--space-2) 0 var(--space-4);
+
+    .song-table__cell-content {
+        justify-content: center;
+    }
+}
+
+.song-table__checkbox {
+    // 重置 button 默认样式
+    border: none;
+    background: none;
+    padding: 0;
+
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+
+    // 默认外观（与 CheckboxGroup 一致）
+    border-radius: var(--radius-badge);
+    border: 1.5px solid var(--color-border-default);
+    background: transparent;
+    color: transparent;
+
+    transition:
+        background-color var(--duration-normal) var(--ease-standard),
+        border-color var(--duration-normal) var(--ease-standard),
+        color var(--duration-normal) var(--ease-standard);
+
+    &:hover {
+        border-color: var(--color-border-strong);
+    }
+
+    &:active {
+        opacity: var(--opacity-pressed);
+    }
+
+    // 选中 / 半选态
+    &.is-checked,
+    &.is-indeterminate {
+        background: var(--color-fill-brand);
+        border-color: var(--color-fill-brand);
+        color: var(--color-text-on-brand);
+    }
+
+    &:focus-visible {
+        outline: none;
+        box-shadow:
+            0 0 0 var(--focus-ring-offset) var(--color-bg-base),
+            var(--focus-ring);
+    }
+
+    &-icon {
+        width: 10px;
+        height: 10px;
     }
 }
 

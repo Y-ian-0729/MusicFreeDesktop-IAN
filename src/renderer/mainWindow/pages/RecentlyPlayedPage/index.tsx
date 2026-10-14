@@ -11,6 +11,8 @@ import {
 import { SongTable, type RowInteractionDetail } from '../../components/business/SongTable';
 import { FavoriteButton } from '../../components/business/FavoriteButton';
 import { DownloadButton } from '../../components/business/DownloadButton';
+import { BatchDownloadButton } from '../../components/business/BatchDownloadButton';
+import { useBatchDownloadSelection } from '../../hooks/useBatchDownloadSelection';
 import { SongToolbar } from '../../components/ui/SongToolbar';
 import { ListFooter } from '../../components/ui/ListFooter';
 import { StatusPlaceholder } from '../../components/ui/StatusPlaceholder';
@@ -46,6 +48,13 @@ export default function RecentlyPlayedPage() {
                 item.album?.toLowerCase().includes(keyword),
         );
     }, [recentList, searchValue]);
+
+    // ── 多选 + 批量下载（搜索词变化时重置） ──
+    const {
+        selectedItems: selectedForDownload,
+        clearSelection,
+        selectionProps,
+    } = useBatchDownloadSelection(filteredList, [searchValue]);
 
     // ── 清空确认弹窗 ──
     const handleClear = useCallback(() => {
@@ -112,6 +121,10 @@ export default function RecentlyPlayedPage() {
                             >
                                 {t('history.clear')}
                             </Button>
+                            <BatchDownloadButton
+                                selectedItems={selectedForDownload}
+                                onDone={clearSelection}
+                            />
                         </SongToolbar>
                     </div>
 
@@ -124,6 +137,7 @@ export default function RecentlyPlayedPage() {
                             </>
                         )}
                         onRowContextMenu={handleRowContextMenu}
+                        {...selectionProps}
                     />
                     <ListFooter status={RequestStatus.Done} />
                 </>

@@ -1,0 +1,30 @@
+// ============================================================================
+// BatchDownloadModal — 批量下载弹窗样式
+// ============================================================================
+
+.b-batch-download {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+
+    &__count {
+        font-size: var(--text-body-size);
+        color: var(--color-text-primary);
+    }
+
+    &__skipped {
+        font-size: var(--text-caption-size);
+        color: var(--color-text-muted);
+    }
+
+    &__empty {
+        font-size: var(--text-body-size);
+        color: var(--color-text-secondary);
+    }
+
+    &__label {
+        margin-top: var(--space-2);
+        font-size: var(--text-caption-size);
+        color: var(--color-text-secondary);
+    }
+}

@@ -18,18 +18,15 @@ import type {
     IDownloadProgress,
     IDownloadTaskEvent,
     IAddDownloadParams,
+    IAddDownloadTasksBatchParams,
     ActiveDownloadStatus,
 } from '@appTypes/infra/downloadManager';
-import type { IMusicItemSlim } from '@appTypes/infra/musicSheet';
 
 // ─── Preload Bridge ───
 
 interface IMod {
     addTask(params: IAddDownloadParams): Promise<IDownloadTask>;
-    addTasksBatch(params: {
-        musicItems: Array<IMusic.IMusicItem | IMusicItemSlim>;
-        quality?: IMusic.IQualityKey;
-    }): Promise<IDownloadTask[]>;
+    addTasksBatch(params: IAddDownloadTasksBatchParams): Promise<IDownloadTask[]>;
     pauseTask(taskId: string): Promise<void>;
     resumeTask(taskId: string): Promise<void>;
     removeTask(taskId: string): Promise<void>;

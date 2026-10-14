@@ -11,6 +11,8 @@ import { RequestStatus } from '@common/constant';
 import { SongTable } from '../../../components/business/SongTable';
 import { FavoriteButton } from '../../../components/business/FavoriteButton';
 import { DownloadButton } from '../../../components/business/DownloadButton';
+import { BatchDownloadAction } from '../../../components/business/BatchDownloadAction';
+import { useSelection } from '../../../hooks/useSelection';
 import { searchResultsAtom, type SearchMediaType } from '../store';
 import { useSearch } from '../useSearch';
 import { showContextMenu } from '@renderer/mainWindow/components/ui/ContextMenu/contextMenuManager';
@@ -28,6 +30,9 @@ export function MusicResult({ pluginHash }: MusicResultProps) {
     const data = record?.data ?? [];
     const status = record?.status ?? RequestStatus.Idle;
     const isEnd = record?.isEnd ?? false;
+
+    // 多选（切换插件或搜索词时重置）
+    const { selectionProps } = useSelection([pluginHash, record?.query]);
 
     const handleRetry = useCallback(() => {
         if (record?.query) {
@@ -67,6 +72,13 @@ export function MusicResult({ pluginHash }: MusicResultProps) {
             loadMoreStatus={status === RequestStatus.Done ? RequestStatus.Idle : status}
             onLoadMore={handleLoadMore}
             onLoadMoreRetry={handleLoadMore}
+            {...selectionProps}
+            selectionToolbar={(selectedItems, clearSelection) => (
+                <BatchDownloadAction
+                    selectedItems={selectedItems as IMusic.IMusicItem[]}
+                    clearSelection={clearSelection}
+                />
+            )}
         />
     );
 }
